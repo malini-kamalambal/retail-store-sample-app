@@ -62,7 +62,7 @@ Resources:
       Source:
         Type: CODEPIPELINE
         GitCloneDepth: 1
-        BuildSpec: backend-app/src/main/codebuild/staging/buildspec-create.yml
+        BuildSpec: src/ui/buildspec.yml
       Environment:
         PrivilegedMode: true
         Type: LINUX_CONTAINER
