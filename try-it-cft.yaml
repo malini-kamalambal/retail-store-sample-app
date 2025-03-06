@@ -1,3 +1,5 @@
+#aws cloudformation deploy --template-file try-it-cft.yaml --stack-name GAB-EPH-ENV-CLI2 --capabilities CAPABILITY_NAMED_IAM --parameter-overrides S3BucketName=gb-ephemeral-uygbhwfadjknscmx
+
 Description: CodePipeline to Build Ephemeral Environments
 
 Parameters:
@@ -51,18 +53,51 @@ Resources:
                   ]
               OutputArtifacts:
                 - Name: BuildArtifact
+        # - Name: DeployStage
+        #   Actions:
+        #     - Name: DeployAction
+        #       RunOrder: 1
+        #       InputArtifacts:
+        #         - Name: BuildArtifact
+        #       ActionTypeId:
+        #         Category: Deploy
+        #         Owner: AWS
+        #         Provider: CodeDeploy
+        #         Version: '1'
+        #       Configuration:
+        #         ApplicationName: !Ref EphemeralEnvCodeDeployApplication
+        #         DeploymentGroupName: !Ref EphemeralEnvCodeDeployGroup
+        #         EnvironmentVariables: !Sub |
+        #           [
+        #             {"name": "BRANCH", "value": "#{GitHubSource.BranchName}"},
+        #           ]
+        #       OutputArtifacts:
+        #         - Name: BuildArtifact
       ArtifactStore:
         Location: !Ref S3BucketName
         Type: S3
 
+  # EphemeralEnvCodeDeployApplication:
+  #   Type: AWS::CodeDeploy::Application
+  #   Properties:
+  #     ApplicationName: EphemeralEnv-Application-{GitHubSource.BranchName}
+  #     ComputePlatform: ECS
+
+  # EphemeralEnvCodeDeployGroup:
+  #   Type: AWS::CodeDeploy::DeploymentGroup
+  #   Properties:
+  #     ApplicationName: !Ref EphemeralEnvCodeDeployApplication
+  #     DeploymentGroupName: EphemeralEnv-DeploymentGroup-{GitHubSource.BranchName}
+  #     ServiceRoleArn: !GetAtt EphemeralEnvCodePipelineServiceRole.Arn
+
   EphemeralEnvCodeBuildProjectCreate:
     Type: AWS::CodeBuild::Project
     Properties:
-      Name: EphemeralEnvCodeBuildProject
+      Name: EphemeralEnvCodeBuildProjectCreate
       Source:
         Type: CODEPIPELINE
         GitCloneDepth: 1
-        BuildSpec: src/ui/buildspec.yml
+        BuildSpec: backend-app/src/main/codebuild/staging/buildspec-ephemeral-env.yml
       Environment:
         PrivilegedMode: true
         Type: LINUX_CONTAINER
@@ -121,7 +156,7 @@ Resources:
   EphemeralEnvCodeBuildProjectDestroy:
     Type: AWS::CodeBuild::Project
     Properties:
-      Name: EphemeralEnvCodeBuildProject
+      Name: EphemeralEnvCodeBuildProjectDestroy
       Source:
         Type: CODEPIPELINE
         GitCloneDepth: 1
